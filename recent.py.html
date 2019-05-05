@@ -1,0 +1,299 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import nltk
+nltk.download('all')
+
+import regex as re
+import numpy as np
+import pandas as pd
+from sklearn.utils import shuffle
+from nltk import LancasterStemmer
+from nltk.tokenize import word_tokenize
+nltk.download('movie_reviews')
+from nltk.corpus import movie_reviews, stopwords
+from sklearn.naive_bayes import GaussianNB
+
+from sklearn.model_selection import train_test_split
+from nltk import FreqDist
+
+
+# In[6]:
+
+
+data = pd.DataFrame(columns=['text', 'sentiment'])
+data
+
+
+for id in movie_reviews.fileids():
+  text = ' '.join(movie_reviews.words(id))
+  sentiment = 1 if movie_reviews.categories() == 1 else 0
+  data = data.append(pd.DataFrame({'text': text,'sentiment': sentiment}, index=[0]))
+fpos = FreqDist(movie_reviews.words(categories='pos'))
+
+all_words = [word.lower() for word in movie_reviews.words()]
+
+from nltk import FreqDist
+all_words_frequency = FreqDist(all_words)
+documents = []
+for category in movie_reviews.categories():
+    for fileid in movie_reviews.fileids(category):
+        #documents.append((list(movie_reviews.words(fileid)), category))
+        documents.append((movie_reviews.words(fileid), category))
+        
+print(documents[0])
+
+def document_features(document):
+    # "set" function will re
+    #move repeated/duplicate tokens in the given list
+    document_words = set(document)
+    features = {}
+    
+    
+    for word in word_features:
+        features['contains(%s)' % word] = (word in document_words)
+    return features
+ 
+# get the first negative movie review file
+movie_review_file = movie_reviews.fileids('neg')[0] 
+print (movie_review_file)
+
+
+# In[14]:
+
+
+en_stopwords = list(set(nltk.corpus.stopwords.words('english')))
+print(en_stopwords)
+
+all_words_without_stopwords = []
+
+all_words_without_stopwords = [word for word in all_words if word not in en_stopwords]
+import string
+print(string.punctuation)
+
+all_words_without_punctuation = [word for word in all_words if word not in string.punctuation]
+print (all_words_without_punctuation[:10])
+
+all_words_clean = []
+for word in all_words:
+    if word not in en_stopwords and word not in string.punctuation:
+        all_words_clean.append(word)
+ 
+print (all_words_clean[:10])
+
+all_words_frequency = FreqDist(all_words_clean)
+print(all_words_frequency)
+
+most_common_words = all_words_frequency.most_common(2000)
+print (most_common_words[:10])
+
+
+tokens = [word_tokenize(x) for x in data['text']]
+filtered_tokens = []
+word_features = [item[0] for item in most_common_words]
+
+
+feature_set = [(document_features(doc), category) for (doc, category) in documents]
+print (feature_set[0])
+
+for i in tokens:
+  filtered_tokens.append([])
+  for j in i:
+    if j in en_stopwords:
+      continue
+    else: filtered_tokens[-1].append(j)
+        
+
+      
+# initialize Lancaster Stemmer
+LS = LancasterStemmer()
+lemmatized = []
+for l in filtered_tokens: lemmatized.append([LS.stem(w) for w in l])
+
+
+# In[ ]:
+
+
+
+
+
+# In[48]:
+
+
+word_matrix = []
+
+for i in lemmatized: word_matrix.append([1 if j in i else 0 for j in top15])
+featuresets = pd.DataFrame(word_matrix, columns = top15, index = pd.DataFrame(filtered_tokens))
+featuresets['sentiment'] = data['sentiment'].values
+featuresets.head(20)
+
+
+# In[7]:
+
+
+pos_reviews = data[data['sentiment'] == 1]
+neg_reviews = data[data['sentiment'] == 0]
+
+neg_reviews
+
+train, test = train_test_split(data, test_size = 0.3)
+
+cols = train.columns[:-1]
+
+gnb = MultinomialNB()
+gnb.fit(train[cols], train['sentiment'])
+y_pred = gnb.predict(test[cols])
+
+print("performance {:05.2f}%"
+      .format(
+          test.shape[0],
+          (test["sentiment"] != y_pred).sum(),
+          100*(1-(test["sentiment"] != y_pred).sum()/test.shape[0])
+))
+
+
+# In[20]:
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+stop_words = ['in', 'of', 'at', 'a', 'the']
+ngram_vectorizer = CountVectorizer(binary=True, ngram_range=(1, 3), stop_words=stop_words)
+ngram_vectorizer.fit(reviews_train_clean)
+X = ngram_vectorizer.transform(reviews_train_clean)
+X_test = ngram_vectorizer.transform(reviews_test_clean)
+
+X_train, X_val, y_train, y_val = train_test_split(
+    X, target, train_size = 0.75
+)
+
+for c in [0.001, 0.005, 0.01, 0.05, 0.1]:
+    
+    svm = LinearSVC(C=c)
+    svm.fit(X_train, y_train)
+    print ("Accuracy for C=%s: %s" 
+           % (c, accuracy_score(y_val, svm.predict(X_val))))
+    
+    
+
+
+
+print (len(feature_set)) 
+ 
+test_set = feature_set[:400]
+train_set = feature_set[400:]
+
+ 
+    
+print (len(train_set))
+print (len(test_set)) 
+
+
+
+
+
+print (len(movie_reviews.fileids('pos')))
+
+print (len(movie_reviews.fileids('neg')))
+
+
+# In[ ]:
+
+
+from nltk import NaiveBayesClassifier
+from nltk import classify 
+
+classifier = NaiveBayesClassifier.train(train_set)
+accuracy = classify.accuracy(classifier, test_set)
+
+final_ngram = LogisticRegression(C=0.5)
+final_ngram.fit(X, target)
+final_ngram_accuracy = final_ngram x final_ngram.fit
+
+
+# In[10]:
+
+
+print(final_ngram_accuracy)
+
+
+# In[41]:
+
+
+from matplotlib import pyplot as plt
+from matplotlib import style
+style.use('ggplot')
+x = [1,2]
+y = [77.5,87.9]
+
+
+
+plt.plot(x,y,label='INCREASE IN ACCURACY',color='g')
+plt.title('PLOTTING ACCURACY OF TWO CASES')
+plt.xlabel('Cases')
+plt.ylabel('Accuracy')
+
+plt.legend()
+
+
+plt.scatter(x,y,color='k')
+plt.bar(x,y)
+
+
+# In[ ]:
+
+
+
+
+
+# In[30]:
+
+
+custom_review = "Excellent"
+custom_review_tokens = word_tokenize(custom_review)
+custom_review_set = document_features(custom_review_tokens)
+custom_review_set = document_features(custom_review_tokens)
+prob_result = classifier.prob_classify(custom_review_set)
+if(prob_result.prob("neg")>prob_result("pos")):
+    final_review_result = ('pos')
+else
+    final_review_result = ('neg')
+    
+
+
+# In[5]:
+
+
+final_review_result
+
+
+# In[50]:
+
+
+custom_review = "Excellent"
+custom_review_tokens = word_tokenize(custom_review)
+custom_review_set = document_features(custom_review_tokens)
+prob_result = classifier.prob_classify(custom_review_set)
+if(prob_result.prob("neg")>prob_result("pos")):
+    final_review_result = ('pos')
+else
+    final_review_result = ('neg')
+
+
+# In[3]:
+
+
+final_review_resut
+
+
+# In[ ]:
+
+
+
+
